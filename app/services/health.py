@@ -298,7 +298,8 @@ async def check_ollama(settings: Settings) -> HealthCheckResult:
 
     try:
         # httpx.AsyncClient 是异步 HTTP 客户端，适合在 FastAPI async 路由里使用。
-        async with httpx.AsyncClient(timeout=settings.http_timeout_seconds) as client:
+        # 内网 IP 不应该走系统代理；httpx 默认会读取代理环境，可能导致内网超时。
+        async with httpx.AsyncClient(timeout=settings.http_timeout_seconds, trust_env=False) as client:
             response = await client.get(url)
         payload = response.json() if response.headers.get("content-type", "").startswith("application/json") else {}
     except (httpx.HTTPError, ValueError) as exc:
@@ -350,6 +351,7 @@ async def check_dify(settings: Settings) -> HealthCheckResult:
         async with httpx.AsyncClient(
             timeout=settings.http_timeout_seconds,
             follow_redirects=True,
+            trust_env=False,
         ) as client:
             response = await client.get(settings.dify_health_url)
             checked_url = settings.dify_health_url

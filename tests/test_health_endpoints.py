@@ -27,6 +27,7 @@ def test_root_lists_dify_tool_metadata() -> None:
     assert response.status_code == 200
     payload = response.json()
     assert payload["openapi"] == "/openapi.json"
+    assert payload["dify_openapi"] == "/dify-openapi.json"
     assert "/health/docker" in payload["health_endpoints"]
 
 
@@ -37,6 +38,18 @@ def test_docs_page_is_local_and_does_not_use_cdn() -> None:
     assert "inner-ai-tools API 文档" in response.text
     assert "https://cdn.jsdelivr.net" not in response.text
     assert "/openapi.json" in response.text
+
+
+def test_dify_openapi_schema_is_compatible_with_dify() -> None:
+    response = client.get("/dify-openapi.json")
+
+    assert response.status_code == 200
+    payload = response.json()
+    assert payload["openapi"] == "3.0.3"
+    assert payload["servers"][0]["url"] == "http://192.168.1.103:8000"
+    assert "/" not in payload["paths"]
+    assert "/health/docker" in payload["paths"]
+    assert payload["paths"]["/health/docker"]["get"]["operationId"] == "checkDockerHealth"
 
 
 @pytest.mark.parametrize(

@@ -1,9 +1,10 @@
 from typing import Annotated
 
 from fastapi import Depends, FastAPI
-from fastapi.responses import HTMLResponse
+from fastapi.responses import HTMLResponse, JSONResponse
 
 from app.config import Settings, get_settings
+from app.dify_schema import get_dify_openapi_schema
 from app.docs import get_local_docs_html
 from app.schemas import HealthCheckResult
 from app.services.health import check_dify, check_docker, check_milvus, check_ollama
@@ -45,6 +46,19 @@ async def local_docs() -> HTMLResponse:
     return HTMLResponse(get_local_docs_html())
 
 
+@app.get("/dify-openapi.json", include_in_schema=False)
+async def dify_openapi() -> JSONResponse:
+    """Return the OpenAPI schema that should be imported into Dify.
+
+    Why not use `/openapi.json` directly?
+    - FastAPI's built-in schema is OpenAPI 3.1.0.
+    - Some Dify custom-tool importers reject 3.1.0 as invalid.
+    - This endpoint returns a smaller OpenAPI 3.0.3 document.
+    """
+
+    return JSONResponse(get_dify_openapi_schema())
+
+
 @app.get("/", tags=["meta"])
 async def root() -> dict[str, object]:
     """服务首页，告诉调用方这个服务有哪些入口。
@@ -62,6 +76,7 @@ async def root() -> dict[str, object]:
         "name": "inner-ai-tools",
         "docs": "/docs",
         "openapi": "/openapi.json",
+        "dify_openapi": "/dify-openapi.json",
         "health_endpoints": [
             "/health/docker",
             "/health/ollama",

@@ -32,7 +32,7 @@ curl http://127.0.0.1:8000/health/milvus
 如果 Dify 部署在 `192.168.1.102`，可以在 Dify Tool 中导入：
 
 ```text
-http://192.168.1.103:8000/openapi.json
+http://192.168.1.103:8000/dify-openapi.json
 ```
 
 ## 配置
@@ -87,5 +87,42 @@ uv run pytest
 
 1. FastAPI 服务启动时使用 `--host 0.0.0.0`，这样 Dify 所在机器才能访问你的 Windows 主机。
 2. 在 Windows 防火墙中放行 `8000` 端口。
-3. Dify Tool 导入地址使用 `http://192.168.1.103:8000/openapi.json`。
+3. Dify Tool 导入地址使用 `http://192.168.1.103:8000/dify-openapi.json`。
 4. Agent 先只允许调用这些只读接口，等你熟悉权限控制后再考虑写操作。
+
+## 第 3 阶段：Dify RAG 知识库
+
+第三阶段的知识库文档放在 `knowledge-base/` 目录下：
+
+```text
+knowledge-base/
+├── 01-dify-deployment-notes.md
+├── 02-ollama-config-notes.md
+├── 03-docker-image-offline-import.md
+├── 04-rerank-deployment-notes.md
+├── 05-milvus-guide.md
+├── 06-common-errors-faq.md
+├── 07-dify-containers-guide.md
+├── 08-model-config-guide.md
+├── 09-rag-tuning-log.md
+└── 10-ops-command-handbook.md
+```
+
+推荐 Dify 知识库配置：
+
+```text
+Embedding：bge-m3
+检索方式：混合检索
+Rerank：bge-reranker-v2-m3
+Top K：5
+Score 阈值：0.35
+```
+
+详细导入和调优说明见 `knowledge-base/README.md`。
+
+$env:DOCKER_CHECK_MODE="ssh"
+$env:DOCKER_SSH_HOST="192.168.1.102"
+$env:DOCKER_SSH_USERNAME="root"
+$env:DOCKER_SSH_PASSWORD=""
+
+uv run uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
